@@ -13,7 +13,6 @@ Requirements
 
 * wget
 * linprocfs (VERY IMPORTANT)
-* proc
 * base64
 
 Tested Distributions (x64)

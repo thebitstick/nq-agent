@@ -94,7 +94,7 @@ fi
 mkdir -p /etc/nodequery
 
 # Download agent
-echo -e "|   Downloading nq-agent.sh to /etc/nodequery\n|\n|   + $(wget -nv -o /dev/stdout -O /etc/nodequery/nq-agent.sh --no-check-certificate https://raw.github.com/nodequery/nq-agent/master/nq-agent.sh)"
+echo -e "|   Downloading nq-agent.sh to /etc/nodequery\n|\n|   + $(wget -nv -o /dev/stdout -O /etc/nodequery/nq-agent.sh --no-check-certificate https://raw.githubusercontent.com/thebitstick/nq-agent-BSD/master/nq-agent.sh)"
 
 if [ -f /etc/nodequery/nq-agent.sh ]
 then
@@ -106,9 +106,6 @@ then
 	
 	# Modify user permissions
 	chown -R nodequery:nodequery /etc/nodequery && chmod -R 700 /etc/nodequery
-	
-	# Modify ping permissions
-	chmod +s `type -p ping`
 
 	# Configure cron
 	crontab -u nodequery -l 2>/dev/null | { cat; echo "*/3 * * * * bash /etc/nodequery/nq-agent.sh > /etc/nodequery/nq-cron.log 2>&1"; } | crontab -u nodequery -

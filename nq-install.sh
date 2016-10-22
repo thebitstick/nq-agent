@@ -120,3 +120,4 @@ else
 	# Show error
 	echo -e "|\n|   Error: The NodeQuery agent could not be installed\n|"
 fi
+fi

@@ -146,7 +146,7 @@ disk_usage=$(prep $(num "$(($(df -P | grep '^/' | awk '{ print $3 }' | sed -e :a
 disk_array=$(prep "$(df -P | grep '^/' | awk '{ print $1" "$2" "$3";" }' | sed -e :a -e '$!N;s/\n/ /;ta' | awk '{ print $0 } END { if (!NR) print "N/A" }')")
 
 # Active connections
-connections=$(prep $(num "$(netstat -tun | tail -n +3 | wc -l)"))
+connections=$(prep $(num "$(netstat -un | tail -n +3 | wc -l)"))
 
 # Network interface
 nic=$(ifconfig | grep 'UP,BROADCAST' | cut -d: -f1 | head -n 1)

@@ -18,7 +18,7 @@
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Prepare output
-echo -e "|\n|   NodeQuery Installer\n|   ===================\n|"
+echo -e "|\n|   NodeQuery BSD Installer\n|   ===================\n|"
 
 # Root required
 if [ $(id -u) != "0" ];
@@ -40,32 +40,7 @@ if [ ! -n "$(command -v crontab)" ]
 then
 
 	# Confirm crontab installation
-	echo "|" && read -p "|   Crontab is required and could not be found. Do you want to install it? [Y/n] " input_variable_install
-
-	# Attempt to install crontab
-	if [ -z $input_variable_install ] || [ $input_variable_install == "Y" ] || [ $input_variable_install == "y" ]
-	then
-		if [ -n "$(command -v apt-get)" ]
-		then
-			echo -e "|\n|   Notice: Installing required package 'cron' via 'apt-get'"
-		    apt-get -y update
-		    apt-get -y install cron
-		elif [ -n "$(command -v yum)" ]
-		then
-			echo -e "|\n|   Notice: Installing required package 'cronie' via 'yum'"
-		    yum -y install cronie
-		    
-		    if [ ! -n "$(command -v crontab)" ]
-		    then
-		    	echo -e "|\n|   Notice: Installing required package 'vixie-cron' via 'yum'"
-		    	yum -y install vixie-cron
-		    fi
-		elif [ -n "$(command -v pacman)" ]
-		then
-			echo -e "|\n|   Notice: Installing required package 'cronie' via 'pacman'"
-		    pacman -S --noconfirm cronie
-		fi
-	fi
+	echo "|" && read -p "|   Crontab is required and could not be found. "
 	
 	if [ ! -n "$(command -v crontab)" ]
 	then
@@ -85,25 +60,14 @@ then
 	# Attempt to start cron
 	if [ -z $input_variable_service ] || [ $input_variable_service == "Y" ] || [ $input_variable_service == "y" ]
 	then
-		if [ -n "$(command -v apt-get)" ]
+		if [ -n "$(command -v pkg)" ]
 		then
 			echo -e "|\n|   Notice: Starting 'cron' via 'service'"
-			service cron start
-		elif [ -n "$(command -v yum)" ]
-		then
-			echo -e "|\n|   Notice: Starting 'crond' via 'service'"
-			chkconfig crond on
-			service crond start
-		elif [ -n "$(command -v pacman)" ]
-		then
-			echo -e "|\n|   Notice: Starting 'cronie' via 'systemctl'"
-		    systemctl start cronie
-		    systemctl enable cronie
-		fi
+			service cron onestart
 	fi
 	
 	# Check if cron was started
-	if [ -z "$(ps -Al | grep cron | grep -v grep)" ]
+	if [ -z "$(ps -Al | grep cron)" ]
 	then
 		# Show error
 		echo -e "|\n|   Error: Cron is available but could not be started\n|"
@@ -120,7 +84,7 @@ then
 	# Remove cron entry and user
 	if id -u nodequery >/dev/null 2>&1
 	then
-		(crontab -u nodequery -l | grep -v "/etc/nodequery/nq-agent.sh") | crontab -u nodequery - && userdel nodequery
+		(crontab -u nodequery -l | grep -v "/etc/nodequery/nq-agent.sh") | crontab -u nodequery - && rmuser -y nodequery
 	else
 		(crontab -u root -l | grep -v "/etc/nodequery/nq-agent.sh") | crontab -u root -
 	fi
@@ -138,7 +102,7 @@ then
 	echo "$1" > /etc/nodequery/nq-auth.log
 	
 	# Create user
-	useradd nodequery -r -d /etc/nodequery -s /bin/false
+	pw user add nodequery -d /etc/nodequery -s /usr/bin/false
 	
 	# Modify user permissions
 	chown -R nodequery:nodequery /etc/nodequery && chmod -R 700 /etc/nodequery
@@ -152,11 +116,6 @@ then
 	# Show success
 	echo -e "|\n|   Success: The NodeQuery agent has been installed\n|"
 	
-	# Attempt to delete installation script
-	if [ -f $0 ]
-	then
-		rm -f $0
-	fi
 else
 	# Show error
 	echo -e "|\n|   Error: The NodeQuery agent could not be installed\n|"

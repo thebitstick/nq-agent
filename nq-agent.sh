@@ -69,12 +69,12 @@ sessions=$(prep "$(who | wc -l)")
 processes=$(prep "$(ps axc | wc -l)")
 
 # Process array
-processes_array="$(ps axc -o uname:12,pcpu,rss,cmd --sort=-pcpu,-rss --noheaders --width 120)"
+processes_array="$(ps af -o logname,pcpu,rss,command | sort -nk 3 | head -20 | grep -v RSS)"
 processes_array="$(echo "$processes_array" | grep -v " ps$" | sed 's/ \+ / /g' | sed '/^$/d' | tr "\n" ";")"
 
 # File descriptors
-file_handles=$(prep $(num "$(cat /compat/linux/proc/sys/fs/file-nr | awk '{ print $1 }')"))
-file_handles_limit=$(prep $(num "$(cat /compat/linux/proc/sys/fs/file-nr | awk '{ print $3 }')"))
+file_handles=$(prep $(num "$(sysctl kern.openfiles | awk '{ print $2 }')"))
+file_handles_limit=$(prep $(num "$(sysctl kern.maxfiles | awk '{ print $2 }')"))
 
 # OS details
 os_kernel=$(prep "$(uname -r)")
@@ -124,11 +124,6 @@ fi
 
 cpu_freq=$(prep "$(cat /compat/linux/proc/cpuinfo | grep 'cpu MHz' | awk -F\: '{ print $2 }')")
 
-if [ -z "$cpu_freq" ]
-then
-	cpu_freq=$(prep $(num "$(lscpu | grep 'CPU MHz' | awk -F\: '{ print $2 }' | sed -e 's/^ *//g' -e 's/ *$//g')"))
-fi
-
 # RAM usage
 ram_total=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^MemTotal: | awk '{ print $2 }')"))
 ram_free=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^MemFree: | awk '{ print $2 }')"))
@@ -138,25 +133,20 @@ ram_usage=$((($ram_total-($ram_free+$ram_cached+$ram_buffers))*1024))
 ram_total=$(($ram_total*1024))
 
 # Swap usage
-swap_total=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^SwapTotal: | awk '{ print $2 }')"))
-swap_free=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^SwapFree: | awk '{ print $2 }')"))
+swap_total=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep SwapTotal | awk '{ print $2 }')"))
+swap_free=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep SwapFree | awk '{ print $2 }')"))
 swap_usage=$((($swap_total-$swap_free)*1024))
 swap_total=$(($swap_total*1024))
 
 # Disk usage
-disk_total=$(prep $(num "$(($(df -P -B 1 | grep '^/' | awk '{ print $2 }' | sed -e :a -e '$!N;s/\n/+/;ta')))"))
-disk_usage=$(prep $(num "$(($(df -P -B 1 | grep '^/' | awk '{ print $3 }' | sed -e :a -e '$!N;s/\n/+/;ta')))"))
+disk_total=$(prep $(num "$(($(df -P | grep '^/' | awk '{ print $2 }' | sed -e :a -e '$!N;s/\n/+/;ta')))"))
+disk_usage=$(prep $(num "$(($(df -P | grep '^/' | awk '{ print $3 }' | sed -e :a -e '$!N;s/\n/+/;ta')))"))
 
 # Disk array
-disk_array=$(prep "$(df -P -B 1 | grep '^/' | awk '{ print $1" "$2" "$3";" }' | sed -e :a -e '$!N;s/\n/ /;ta' | awk '{ print $0 } END { if (!NR) print "N/A" }')")
+disk_array=$(prep "$(df -P | grep '^/' | awk '{ print $1" "$2" "$3";" }' | sed -e :a -e '$!N;s/\n/ /;ta' | awk '{ print $0 } END { if (!NR) print "N/A" }')")
 
 # Active connections
-if [ -n "$(command -v ss)" ]
-then
-	connections=$(prep $(num "$(ss -tun | tail -n +2 | wc -l)"))
-else
-	connections=$(prep $(num "$(netstat -tun | tail -n +3 | wc -l)"))
-fi
+connections=$(prep $(num "$(netstat -tun | tail -n +3 | wc -l)"))
 
 # Network interface
 nic=$(ifconfig | grep 'UP,BROADCAST' | cut -d: -f1 | head -n 1)
@@ -165,14 +155,8 @@ nic=$(ifconfig | grep 'UP,BROADCAST' | cut -d: -f1 | head -n 1)
 ipv4=$(prep "$(ifconfig $nic | grep 'inet ' | awk '{ print $2 }' | awk -F\/ '{ print $1 }' | grep -v '^127' | awk '{ print $0 } END { if (!NR) print "N/A" }')")
 ipv6=$(prep "$(ifconfig $nic | grep 'inet6 ' | awk '{ print $2 }' | awk -F\/ '{ print $1 }' | grep -v '^::' | grep -v '^0000:' | grep -v '^fe80:' | awk '{ print $0 } END { if (!NR) print "N/A" }')")
 
-if [ -d /sys/class/net/$nic/statistics ]
-then
-	rx=$(prep $(num "$(cat /sys/class/net/$nic/statistics/rx_bytes)"))
-	tx=$(prep $(num "$(cat /sys/class/net/$nic/statistics/tx_bytes)"))
-else
-	rx=$(prep $(num "$(ifconfig $nic | grep '[0-9]*' | grep 'RX' | awk '{ print $3 }' | head -n 1)"))
-	tx=$(prep $(num "$(ifconfig $nic | grep '[0-9]*' | grep 'TX' | awk '{ print $3 }' | head -n 1)"))
-fi
+rx=$(prep $(num "$(ifconfig $nic | grep '[0-9]*' | grep 'RX' | awk '{ print $3 }' | head -n 1)"))
+tx=$(prep $(num "$(ifconfig $nic | grep '[0-9]*' | grep 'TX' | awk '{ print $3 }' | head -n 1)"))
 
 # Average system load
 load=$(prep "$(uptime | awk -F'[a-z]:' '{ print $2 }')")

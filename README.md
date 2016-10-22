@@ -15,6 +15,8 @@ Requirements
 * crontab
 * wget
 * ip
+* linprocfs (VERY IMPORTANT)
+* proc
 
 Tested Distributions (x64)
 --------------------------

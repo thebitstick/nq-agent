@@ -11,10 +11,7 @@ the agent on your server.
 Requirements
 ------------
 
-* coreutils
-* crontab
 * wget
-* ip
 * linprocfs (VERY IMPORTANT)
 * proc
 * base64

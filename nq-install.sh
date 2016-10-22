@@ -38,16 +38,8 @@ fi
 # Check if crontab is installed
 if [ ! -n "$(command -v crontab)" ]
 then
-
-	# Confirm crontab installation
-	echo "|" && read -p "|   Crontab is required and could not be found. "
-	
-	if [ ! -n "$(command -v crontab)" ]
-	then
-	    # Show error
-	    echo -e "|\n|   Error: Crontab is required and could not be installed\n|"
-	    exit 1
-	fi	
+	echo -e "|\n|   Error: Crontab is required \n|"
+	exit 1
 fi
 
 # Check if cron is running

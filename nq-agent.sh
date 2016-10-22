@@ -125,10 +125,10 @@ fi
 cpu_freq=$(prep "$(cat /compat/linux/proc/cpuinfo | grep 'cpu MHz' | awk -F\: '{ print $2 }')")
 
 # RAM usage
-ram_total=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^MemTotal: | awk '{ print $2 }')"))
-ram_free=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^MemFree: | awk '{ print $2 }')"))
-ram_cached=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^Cached: | awk '{ print $2 }')"))
-ram_buffers=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep ^Buffers: | awk '{ print $2 }')"))
+ram_total=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep MemTotal | awk '{ print $2 }')"))
+ram_free=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep MemFree | awk '{ print $2 }')"))
+ram_cached=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep Cached | awk '{ print $2 }')"))
+ram_buffers=$(prep $(num "$(cat /compat/linux/proc/meminfo | grep Buffers | awk '{ print $2 }')"))
 ram_usage=$((($ram_total-($ram_free+$ram_cached+$ram_buffers))*1024))
 ram_total=$(($ram_total*1024))
 
